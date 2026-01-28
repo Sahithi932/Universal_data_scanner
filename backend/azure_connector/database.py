@@ -5,13 +5,15 @@ import sqlite3
 import os
 from datetime import datetime
 
-# Database path
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scanner.db')
+# Database paths - separated for scans and files
+SCANS_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scanner.db')
+FILES_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'files.db')
 
 
 def init_db():
     """Initialize database and create tables"""
-    conn = sqlite3.connect(DB_PATH)
+    # Initialize scans database
+    conn = sqlite3.connect(SCANS_DB)
     cursor = conn.cursor()
     
     # Create azure_scans table
@@ -28,6 +30,13 @@ def init_db():
             end_time TEXT
         )
     ''')
+    
+    conn.commit()
+    conn.close()
+    
+    # Initialize files database
+    conn = sqlite3.connect(FILES_DB)
+    cursor = conn.cursor()
     
     # Create azure_files table
     cursor.execute('''
@@ -53,7 +62,7 @@ def init_db():
 
 def create_scan(scan_id, name, container_name, storage_account):
     """Create a new Azure scan record"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(SCANS_DB)
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -67,7 +76,7 @@ def create_scan(scan_id, name, container_name, storage_account):
 
 def save_files(scan_id, files):
     """Save files to database"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(FILES_DB)
     cursor = conn.cursor()
     
     for file in files:
@@ -95,7 +104,7 @@ def save_files(scan_id, files):
 
 def complete_scan(scan_id, total_files, total_size):
     """Mark Azure scan as completed"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(SCANS_DB)
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -110,7 +119,7 @@ def complete_scan(scan_id, total_files, total_size):
 
 def fail_scan(scan_id):
     """Mark Azure scan as failed"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(SCANS_DB)
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -123,7 +132,7 @@ def fail_scan(scan_id):
 
 def get_all_scans():
     """Get all Azure scans"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(SCANS_DB)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -136,7 +145,7 @@ def get_all_scans():
 
 def get_scan_files(scan_id, limit=100, offset=0):
     """Get files for an Azure scan with pagination"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(FILES_DB)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
@@ -150,7 +159,7 @@ def get_scan_files(scan_id, limit=100, offset=0):
 
 def get_total_files_count(scan_id):
     """Get total file count for an Azure scan"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(FILES_DB)
     cursor = conn.cursor()
     
     cursor.execute("SELECT COUNT(*) as count FROM azure_files WHERE scan_id = ?", (scan_id,))

@@ -34,13 +34,15 @@ def scan_shared_directory(share_path, share_name):
                     file_path = os.path.join(root, filename)
                     stat = os.stat(file_path)
                     
+                    ext = Path(filename).suffix.lower().lstrip('.')
                     files.append({
                         'file_name': filename,
                         'file_path': file_path,
                         'file_size': stat.st_size,
                         'last_modified': stat.st_mtime,
                         'is_file': True,
-                        'extension': Path(filename).suffix.lower(),
+                        'extension': ext if ext else 'unknown',
+                        'file_type': ext.upper() if ext else 'UNKNOWN',
                     })
                 except (OSError, IOError) as e:
                     errors.append(f"Error reading {filename}: {str(e)}")

@@ -1,6 +1,6 @@
 """
 Universal Data Scanner API
-FastAPI backend for scanning local folders, Azure Blob Storage, and NFS shares
+FastAPI backend for scanning local folders, Azure Blob Storage, and Shared directories
 """
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
@@ -8,12 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 import uuid
 from datetime import datetime
 
-from database import (
+# Import Local connector
+from local_connector import (
     init_db, create_scan, save_files, complete_scan, fail_scan,
-    get_all_scans, get_scan_files, get_total_files_count
+    get_all_scans, get_scan_files, get_total_files_count,
+    scan_folder, get_summary
 )
-from scanner import scan_folder, get_summary
-
 # Import Azure connector
 from azure_connector import (
     scan_azure_blob, get_summary as azure_get_summary,
@@ -22,7 +22,6 @@ from azure_connector import (
     get_all_scans as azure_get_all_scans, get_scan_files as azure_get_scan_files,
     init_db as azure_init_db, get_total_files_count as azure_get_total_files_count
 )
-
 # Import Shared Directory connector
 from shared_connector import (
     scan_shared_directory, get_summary as shared_get_summary,
@@ -31,14 +30,12 @@ from shared_connector import (
     get_all_scans as shared_get_all_scans, get_scan_files as shared_get_scan_files,
     init_db as shared_init_db, get_total_files_count as shared_get_total_files_count
 )
-
 # Create FastAPI app
 app = FastAPI(
     title="Universal Data Scanner",
     description="Scan local folders and Azure Blob Storage",
     version="1.0.0"
 )
-
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -46,14 +43,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Initialize database on startup
 @app.on_event("startup")
 async def startup():
     init_db()
     azure_init_db()
     shared_init_db()
-
 
 # ========== API ENDPOINTS ==========
 
@@ -106,7 +101,6 @@ async def start_scan(
         fail_scan(scan_id)
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
-
 @app.get("/api/scans")
 async def get_scans():
     """Get all scans"""
@@ -137,9 +131,7 @@ async def get_scan_details(scan_id: str, limit: int = 100, offset: int = 0):
         "files": files
     }
 
-
 # ========== AZURE ENDPOINTS ==========
-
 @app.post("/api/scan/azure")
 async def scan_azure(
     connection_string: str = Query(..., description="Azure storage connection string"),
@@ -189,7 +181,6 @@ async def scan_azure(
         azure_fail_scan(scan_id)
         raise HTTPException(status_code=500, detail=f"Azure scan error: {str(e)}")
 
-
 @app.get("/api/scans/azure")
 async def get_azure_scans():
     """Get all Azure scans"""
@@ -199,7 +190,6 @@ async def get_azure_scans():
         "count": len(scans),
         "scans": scans
     }
-
 
 @app.get("/api/scan/azure/{scan_id}")
 async def get_azure_scan_details(scan_id: str, limit: int = 100, offset: int = 0):
@@ -219,7 +209,6 @@ async def get_azure_scan_details(scan_id: str, limit: int = 100, offset: int = 0
         "returned_count": len(files),
         "files": files
     }
-
 
 # ========== SHARED DIRECTORY ENDPOINTS ==========
 
@@ -309,16 +298,13 @@ async def get_shared_scan_details(scan_id: str, limit: int = 100, offset: int = 
         "files": files
     }
 
-
 @app.get("/api/health")
 async def health_check():
     """Health check"""
     return {"status": "ok", "message": "Scanner is running"}
 
-
 # Mount frontend
 app.mount("/", StaticFiles(directory="../ui", html=True), name="ui")
-
 # Run
 if __name__ == "__main__":
     import uvicorn
