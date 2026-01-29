@@ -83,7 +83,8 @@ Two separate SQLite databases:
 
 1. Activate virtual environment:
 ```bash
-cd c:\uds
+cd to the current folder
+python -m venv myenv
 .venv\Scripts\activate
 ```
 
@@ -95,14 +96,13 @@ pip install -r requirement.txt
 3. Start server:
 ```bash
 cd backend
-python -m uvicorn app:app --host 0.0.0.0 --port 8000
+python app.py
+python uvicorn app:app --reload
 ```
-
 4. Open browser:
 ```
-http://localhost:8000/index.html
+http://localhost:8000
 ```
-
 ---
 
 ## Usage
