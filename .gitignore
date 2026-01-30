@@ -13,3 +13,7 @@ env/
 # Database files
 *.db
 db/
+# Environment variables
+.env
+.env.local
+.env.*.local

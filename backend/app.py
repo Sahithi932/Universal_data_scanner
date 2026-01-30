@@ -7,6 +7,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Import Local connector
 from local_connector import (
@@ -134,10 +137,10 @@ async def get_scan_details(scan_id: str, limit: int = 100, offset: int = 0):
 # ========== AZURE ENDPOINTS ==========
 @app.post("/api/scan/azure")
 async def scan_azure(
-    connection_string: str = Query(..., description="Azure storage connection string"),
     container_name: str = Query(..., description="Container name to scan"),
-    storage_account: str = Query(..., description="Storage account name"),
-    scan_name: str = Query(None, description="Optional scan name")
+    storage_account: str = Query(None, description="Storage account name"),
+    scan_name: str = Query(None, description="Optional scan name"),
+    connection_string: str = Query(None, description="Optional: Azure connection string (if not in .env)")
 ):
     """Scan Azure Blob Storage container"""
     scan_id = str(uuid.uuid4())
@@ -145,11 +148,23 @@ async def scan_azure(
     start_time = datetime.now()
     
     try:
+        # Get connection string from parameter or environment variable
+        conn_string = connection_string or os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        
+        if not conn_string:
+            raise HTTPException(
+                status_code=400, 
+                detail="Azure connection string not provided. Set AZURE_STORAGE_CONNECTION_STRING in .env file or pass it as a parameter."
+            )
+        
+        # Get storage account from parameter or extract from connection string
+        storage_acc = storage_account or os.getenv("AZURE_STORAGE_ACCOUNT", "unknown")
+        
         # Create scan record
-        azure_create_scan(scan_id, name, container_name, storage_account)
+        azure_create_scan(scan_id, name, container_name, storage_acc)
         
         # Scan Azure container
-        files = scan_azure_blob(connection_string, container_name)
+        files = scan_azure_blob(conn_string, container_name)
         
         # Save files
         azure_save_files(scan_id, files)
@@ -214,7 +229,7 @@ async def get_azure_scan_details(scan_id: str, limit: int = 100, offset: int = 0
 
 @app.post("/api/scan/shared")
 async def scan_shared(
-    share_path: str = Query(..., description="UNC path to shared folder (e.g., \\\\192.168.1.100\\Share)"),
+    share_path: str = Query(None, description="UNC path to shared folder (e.g., \\\\192.168.1.100\\Share)"),
     share_name: str = Query(..., description="Shared folder name/identifier"),
     scan_name: str = Query(None, description="Optional scan name")
 ):
@@ -224,11 +239,20 @@ async def scan_shared(
     start_time = datetime.now()
     
     try:
+        # Get share path from parameter or environment variable
+        path = share_path or os.getenv("SHARED_DIRECTORY_PATH")
+        
+        if not path:
+            raise HTTPException(
+                status_code=400, 
+                detail="Shared directory path not provided. Set SHARED_DIRECTORY_PATH in .env file or pass share_path as a parameter."
+            )
+        
         # Create scan record
-        shared_create_scan(scan_id, name, share_path, share_name)
+        shared_create_scan(scan_id, name, path, share_name)
         
         # Scan shared directory
-        files = scan_shared_directory(share_path, share_name)
+        files = scan_shared_directory(path, share_name)
         
         # Save files
         shared_save_files(scan_id, files)
@@ -247,7 +271,7 @@ async def scan_shared(
             "scan_id": scan_id,
             "scan_name": name,
             "storage_type": "shared_directory",
-            "share_path": share_path,
+            "share_path": path,
             "share_name": share_name,
             "total_files": summary['total_files'],
             "total_size": summary['total_size'],
@@ -308,6 +332,6 @@ app.mount("/", StaticFiles(directory="../ui", html=True), name="ui")
 # Run
 if __name__ == "__main__":
     import uvicorn
-    print("🌐 Starting Local Data Scanner...")
-    print("📍 http://localhost:8000")
+    print("Starting Local Data Scanner...")
+    print("http://localhost:8000")
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

@@ -29,23 +29,27 @@ Get file metadata, type distribution, and storage analytics in one place.
 ## Project Structure
 
 ```
-backend/
-  ├── app.py                    # FastAPI application
-  ├── scanner.db              # Scan metadata
-  ├── files.db                # File data
-  ├── local_connector/        # Local folder scanner
-  ├── azure_connector/        # Azure Blob scanner
-  └── shared_connector/       # Shared directory scanner
-
-ui/
-  ├── index.html             # HTML structure
-  ├── styles.css             # Styling
-  └── app.js                 # Frontend logic
-
-requirement.txt              # Dependencies
-README.md                    # This file
+.
+├── README.md                          # Project documentation
+├── requirement.txt                    # Python dependencies
+├── backend/
+│   ├── app.py                         # FastAPI application
+│   ├── scanner.db                     # Scan metadata database
+│   ├── files.db                       # File records database
+│   ├── local_connector/
+│   │   ├── database.py                # Local scan database operations
+│   │   └── scanner.py                 # Local folder scanner
+│   ├── azure_connector/
+│   │   ├── database.py                # Azure scan database operations
+│   │   └── scanner.py                 # Azure Blob Storage scanner
+│   └── shared_connector/
+│       ├── database.py                # Shared directory database operations
+│       └── scanner.py                 # Shared directory scanner
+└── ui/
+    ├── index.html                     # Frontend HTML
+    ├── styles.css                     # Frontend styling
+    └── app.js                         # Frontend JavaScript logic
 ```
-
 ---
 
 ## Technology
