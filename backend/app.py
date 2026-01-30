@@ -106,12 +106,36 @@ async def start_scan(
 
 @app.get("/api/scans")
 async def get_scans():
-    """Get all scans"""
-    scans = get_all_scans()
+    """Get all scans from all storage types (local, azure, shared)"""
+    local_scans = get_all_scans()
+    azure_scans = azure_get_all_scans()
+    shared_scans = shared_get_all_scans()
+    
+    # Add storage_type to each scan and normalize field names
+    for scan in local_scans:
+        scan['storage_type'] = 'local'
+    
+    for scan in azure_scans:
+        scan['storage_type'] = 'azure'
+    
+    for scan in shared_scans:
+        scan['storage_type'] = 'shared'
+        # Normalize field names for shared scans (created_at -> start_time, scan_name -> name)
+        if 'created_at' in scan:
+            scan['start_time'] = scan['created_at']
+        if 'scan_name' in scan:
+            scan['name'] = scan['scan_name']
+    
+    # Combine all scans
+    all_scans = local_scans + azure_scans + shared_scans
+    
+    # Sort by start_time descending (most recent first)
+    all_scans.sort(key=lambda x: x.get('start_time', ''), reverse=True)
+    
     return {
         "success": True,
-        "count": len(scans),
-        "scans": scans
+        "count": len(all_scans),
+        "scans": all_scans
     }
 
 

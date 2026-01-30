@@ -4,6 +4,7 @@ Scans Windows shared folders accessible via UNC paths
 """
 import os
 from pathlib import Path
+from datetime import datetime
 
 def scan_shared_directory(share_path, share_name):
     """
@@ -39,7 +40,8 @@ def scan_shared_directory(share_path, share_name):
                         'file_name': filename,
                         'file_path': file_path,
                         'file_size': stat.st_size,
-                        'last_modified': stat.st_mtime,
+                        # Store as ISO format without extra Z
+                        'last_modified': datetime.fromtimestamp(stat.st_mtime).isoformat() if stat.st_mtime else None,
                         'is_file': True,
                         'extension': ext if ext else 'unknown',
                         'file_type': ext.upper() if ext else 'UNKNOWN',
