@@ -61,15 +61,41 @@
             
             <div id="scanMessage"></div>
         </div>
+        <!-- Main Navigation Divisions -->
+<div class="section" id="mainNav" style="display:none;">
+    <div class="dashboard">
+        <div class="stat-card" onclick="showMainSection('dashboard')" style="cursor:pointer;">
+            <div class="stat-value">📊</div>
+            <div class="stat-label">Dashboard</div>
+        </div>
+
+        <div class="stat-card" onclick="showMainSection('explorer')" style="cursor:pointer;">
+            <div class="stat-value">📂</div>
+            <div class="stat-label">File Explorer</div>
+        </div>
+
+        <div class="stat-card" onclick="showMainSection('history')" style="cursor:pointer;">
+            <div class="stat-value">📜</div>
+            <div class="stat-label">Scan History</div>
+        </div>
+        </div>
+        </div>
         
         <!-- Scan Tabs -->
         <div class="section" id="tabsSection" style="display: none;">
             <div class="tabs" id="scanTabs">
                 <!-- Tabs will be dynamically added here -->
             </div>
-            
+            <!-- Main Navigation Buttons -->
+<div class="section" id="mainOptions" style="display: none;">
+    <div class="main-nav">
+        <button class="main-btn" onclick="showSection('dashboard')">📊 Dashboard</button>
+        <button class="main-btn" onclick="showSection('explorer')">📂 File Explorer</button>
+        <button class="main-btn" onclick="showSection('history')">📜 Scan History</button>
+        </div>
+        </div>
             <!-- Dashboard -->
-            <div id="dashboardSection">
+            <div id="dashboardSection" style="display: none;">
                 <h2>📊 Dashboard</h2>
                 <div class="dashboard">
                     <div class="stat-card">
@@ -136,8 +162,8 @@
         </div>
         
         <!-- Scan History -->
-        <div class="section">
-            <h2>📜 Scan History</h2>
+        <div class="section" id="historySection" style="display: none;">
+    <h2>📜 Scan History</h2>
             <div id="scanHistory" style="max-height: 400px; overflow-y: auto;">
                 <p style="padding: 20px; text-align: center; color: #999;">No scans yet</p>
             </div>

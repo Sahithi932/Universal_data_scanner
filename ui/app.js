@@ -4,6 +4,27 @@ let activeScanId = null;  // Currently viewing
 let currentScanFiles = [];
 let currentStorageType = 'local';
 const PAGE_SIZE = 100;
+// 🔹 UI Section Switcher (Dashboard / Explorer / History)
+function showMainSection(section) {
+
+    // Hide main content sections
+    document.getElementById('tabsSection').style.display = 'none';
+    document.getElementById('explorerSection').style.display = 'none';
+
+    const historySection = document.querySelectorAll('.section')[3]; 
+    if (historySection) historySection.style.display = 'none';
+
+    // Show selected section
+    if (section === 'dashboard') {
+        document.getElementById('tabsSection').style.display = 'block';
+    }
+    else if (section === 'explorer') {
+        document.getElementById('explorerSection').style.display = 'block';
+    }
+    else if (section === 'history') {
+        if (historySection) historySection.style.display = 'block';
+    }
+}
 
 function toggleStorageType() {
     currentStorageType = document.querySelector('input[name="storageType"]:checked').value;
@@ -29,6 +50,31 @@ function formatBytes(bytes) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatScanDateTime(dateString) {
+    if (!dateString) return 'Unknown Date';
+    
+    try {
+        let date;
+        
+        if (typeof dateString === 'string') {
+            // Handle ISO format with Z
+            date = new Date(dateString);
+        } else if (typeof dateString === 'number') {
+            date = new Date(dateString * 1000);
+        } else {
+            return 'Unknown Date';
+        }
+        
+        if (isNaN(date.getTime())) {
+            return 'Unknown Date';
+        }
+        
+        return date.toLocaleString();
+    } catch (e) {
+        return 'Unknown Date';
+    }
 }
 
 async function startLocalScan() {
@@ -244,6 +290,7 @@ function switchTab(scanId) {
 
 function showScanResult(scanId) {
     document.getElementById('tabsSection').style.display = 'block';
+    document.getElementById('mainOptions').style.display = 'block';
     updateScanTabs();
     loadActiveTabData();
 }
@@ -258,10 +305,57 @@ function loadActiveTabData() {
     currentScanFiles = session.files;
     
     displayDashboard(session.result);
-    document.getElementById('explorerSection').style.display = 'block';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Unknown Date';
+    
+    try {
+        let date;
+
+        // If it's a string, try to detect numeric string vs ISO string
+        if (typeof dateString === 'string') {
+            const cleaned = dateString.trim();
+
+            // Numeric string (e.g. '1609459200' or '1609459200000')
+            if (/^-?\d+(?:\.\d+)?$/.test(cleaned)) {
+                const n = parseFloat(cleaned);
+                // If number looks like milliseconds (large), use directly; otherwise treat as seconds
+                if (n > 1e12) {
+                    date = new Date(n);
+                } else {
+                    date = new Date(n * 1000);
+                }
+            } else {
+                // Try ISO parse
+                date = new Date(cleaned);
+            }
+        } else if (typeof dateString === 'number') {
+            const n = dateString;
+            if (n > 1e12) {
+                date = new Date(n); // already milliseconds
+            } else {
+                date = new Date(n * 1000); // seconds -> ms
+            }
+        } else {
+            return 'Unknown Date';
+        }
+
+        if (isNaN(date.getTime())) return 'Unknown Date';
+        return date.toLocaleDateString();
+    } catch (e) {
+        console.error('Date parsing error:', e, 'for value:', dateString);
+        return 'Unknown Date';
+    }
 }
 
 function displayFiles(files) {
+    // Debug: log first file to see actual data format
+    if (files && files.length > 0) {
+        console.log('First file data:', files[0]);
+        console.log('last_modified value:', files[0].last_modified, 'type:', typeof files[0].last_modified);
+    }
+    
     let html = '';
     files.forEach(file => {
         html += `
@@ -269,7 +363,7 @@ function displayFiles(files) {
                 <div class="file-info">
                     <div class="file-name">${file.file_name}</div>
                     <div class="file-meta">
-                        ${formatBytes(file.file_size)} • ${new Date(file.last_modified).toLocaleDateString()}
+                        ${formatBytes(file.file_size)} • ${formatDate(file.last_modified)}
                     </div>
                 </div>
                 <span class="file-type-badge">${file.file_type}</span>
@@ -358,13 +452,21 @@ async function loadScans() {
         if (data.scans && data.scans.length > 0) {
             data.scans.forEach(scan => {
                 const statusClass = `status-${scan.status}`;
+                // Get storage type icon
+                let storageIcon = '📁'; // default local
+                if (scan.storage_type === 'azure') {
+                    storageIcon = '☁️';
+                } else if (scan.storage_type === 'shared') {
+                    storageIcon = '🌐';
+                }
+                
                 html += `
-                    <div class="scan-item" onclick="viewScan('${scan.id}')">
+                    <div class="scan-item" onclick="viewScan('${scan.id}', '${scan.storage_type || 'local'}')">
                         <div class="scan-header">
                             <div>
-                                <strong>${scan.name}</strong>
+                                <strong>${storageIcon} ${scan.name}</strong>
                                 <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
-                                    ${scan.total_files || 0} files • ${formatBytes(scan.total_size || 0)} • ${new Date(scan.start_time).toLocaleString()}
+                                    ${scan.total_files || 0} files • ${formatBytes(scan.total_size || 0)} • ${formatScanDateTime(scan.start_time)}
                                 </div>
                             </div>
                             <span class="status-badge ${statusClass}">${scan.status}</span>
@@ -380,9 +482,56 @@ async function loadScans() {
     }
 }
 
-function viewScan(scanId) {
-    // Could implement viewing full scan details
-    alert('Scan ID: ' + scanId);
+function viewScan(scanId, storageType) {
+    // Load scan details and switch to explorer view
+    loadHistoricalScan(scanId, storageType);
+}
+
+async function loadHistoricalScan(scanId, storageType) {
+    try {
+        // Determine which endpoint to use
+        let endpoint = `/scan/${scanId}`;
+        if (storageType === 'azure') {
+            endpoint = `/scan/azure/${scanId}`;
+        } else if (storageType === 'shared') {
+            endpoint = `/scan/shared/${scanId}`;
+        }
+        
+        // Fetch scan details
+        const url = `${API_URL}${endpoint}?limit=10000&offset=0`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.detail || 'Failed to load scan');
+        }
+        
+        // Store in active sessions
+        activeScanSessions[scanId] = {
+            name: `Historical ${storageType} Scan`,
+            type: storageType,
+            files: data.files || [],
+            offset: 0,
+            total: data.total_files,
+            result: {
+                total_files: data.total_files,
+                total_size: 0,
+                duration_seconds: 0,
+                file_type_distribution: {},
+                ocr_eligible_count: 0
+            }
+        };
+        
+        activeScanId = scanId;
+        updateScanTabs();
+        loadActiveTabData();
+        showMainSection('explorer');
+        showMessage(`✅ Loaded historical ${storageType} scan`, 'success');
+        
+    } catch (error) {
+        showMessage('❌ Error loading scan: ' + error.message, 'error');
+        console.error('Load scan error:', error);
+    }
 }
 
 async function exportJSON() {
@@ -507,5 +656,22 @@ function showMessage(msg, type) {
     setTimeout(() => el.innerHTML = '', 5000);
 }
 
+function showSection(section) {
+    document.getElementById('dashboardSection').style.display = 'none';
+    document.getElementById('explorerSection').style.display = 'none';
+    document.getElementById('historySection').style.display = 'none';
+
+    if (section === 'dashboard') {
+        document.getElementById('dashboardSection').style.display = 'block';
+    } 
+    else if (section === 'explorer') {
+        document.getElementById('explorerSection').style.display = 'block';
+    } 
+    else if (section === 'history') {
+        document.getElementById('historySection').style.display = 'block';
+    }
+}
 // Load scans on page load
-document.addEventListener('DOMContentLoaded', loadScans);
+document.addEventListener('DOMContentLoaded', () => {
+    loadScans();
+});
