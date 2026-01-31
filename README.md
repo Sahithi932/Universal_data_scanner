@@ -89,7 +89,7 @@ Two separate SQLite databases:
 ```bash
 cd Universal_data_scanner
 python -m venv venv
-.venv\Scripts\Activate
+.venv\Scripts\Activate.ps1
 ```
 
 2. Install dependencies:
