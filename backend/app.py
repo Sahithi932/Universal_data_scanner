@@ -520,7 +520,9 @@ async def health_check():
     return {"status": "ok", "message": "Scanner is running"}
 
 # Mount frontend
-app.mount("/", StaticFiles(directory="../ui", html=True), name="ui")
+ui_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui")
+if os.path.exists(ui_dir):
+    app.mount("/", StaticFiles(directory=ui_dir, html=True), name="ui")
 # Run
 if __name__ == "__main__":
     import uvicorn

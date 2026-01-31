@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import datetime
 
 def scan_shared_directory(share_path, share_name, stop_flag=None):
-    """
+    r"""
     Scan a shared directory via UNC path
     
     Args:
