@@ -183,35 +183,79 @@ Each file record includes:
 
 ## Test Cases
 
-### Best Case (Medium Folder - Fast Scan)
+### Local Folder Scan
+
+#### Best Case (Medium Folder - Fast Scan)
 **Input:**
 - Path: `C:\Users\ADMIN\Documents`
 - Files: 500-1000 files
+- Total Size: ~2-5 GB
 - Mixed file types (PDFs, DOCX, images)
 
-**Status:** Passed
+**Expected Result:**
+- Scan Duration: 5-10 seconds
+- All files detected correctly
+- File types classified accurately
+- Dates displayed properly
+
+**Status:** ✅ Passed
 
 ---
 
-### Average Case (Large Folder)
+#### Average Case (Large Folder)
 **Input:**
 - Path: `C:\Users\ADMIN`
-- Files: 1000-2000 files
+- Files: 1000-3000 files
 - Total Size: Dependent on folder content (typically 10-30 GB)
 - Mixed file types (office, images, code, archives, videos)
 - Multiple nested folders
 
-**Status:** Passed
+**Result:**
+- Scan Duration: 15-60 seconds
+- All files processed correctly
+- Stop scan button functional during scan
+- Background scanning without UI freeze
+
+**Status:** ✅ Passed
 
 ---
 
-### Worst Case (Very Large Folder - Long Scan)
+#### Worst Case (Very Large Folder - Long Scan)
 **Input:**
 - Path: Large directory with deep nested folders
 - Files: 3000+ files
 - Deep folder hierarchy with multiple levels
 - Various file types and sizes
-**Status:**Passed (after fixes)
+
+** Result:**
+- Scan Duration: 3-4 minutes (86 GB test)
+- Background scanning without blocking UI
+- Stop scan button stops backend processing immediately
+
+**Status:** ✅ Passed (after fixes)
+
+---
+
+### Azure Blob Storage Scan
+
+#### Test Case
+**Input:**
+- Connection String: `DefaultEndpointsProtocol=https;AccountName=****
+- Container Name: Your container name
+- Storage Account: Your account name
+- Files: 250 files tested(example folder,hierarchy with multiple folders)
+**Status:** ✅ Passed
+
+---
+
+### Shared Directory Scan
+
+#### Test Case
+**Input:**
+- Share Path: `\\192.168.x.x\SharedFolder` (from friend's shared folder)
+- Share Name: `shared-1`
+- Files: 800 files
+**Status:** Passed
 
 ---
 

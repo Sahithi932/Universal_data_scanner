@@ -59,9 +59,11 @@ async function startLocalScan() {
                         
                         const result = statusData.result;
                         
-                        // Update scan session with results
-                        activeScanSessions[scanId].total = result.total_files;
-                        activeScanSessions[scanId].result = result;
+                        // Update scan session with results (with safety check)
+                        if (activeScanSessions[scanId]) {
+                            activeScanSessions[scanId].total = result.total_files;
+                            activeScanSessions[scanId].result = result;
+                        }
                         
                         // Update UI
                         updateScanTabs();
@@ -154,9 +156,11 @@ async function startAzureScan() {
                         
                         const result = statusData.result;
                         
-                        // Update scan session with results
-                        activeScanSessions[scanId].total = result.total_files;
-                        activeScanSessions[scanId].result = result;
+                        // Update scan session with results (with safety check)
+                        if (activeScanSessions[scanId]) {
+                            activeScanSessions[scanId].total = result.total_files;
+                            activeScanSessions[scanId].result = result;
+                        }
                         
                         // Update UI
                         updateScanTabs();
@@ -248,9 +252,11 @@ async function startSharedScan() {
                         
                         const result = statusData.result;
                         
-                        // Update scan session with results
-                        activeScanSessions[scanId].total = result.total_files;
-                        activeScanSessions[scanId].result = result;
+                        // Update scan session with results (with safety check)
+                        if (activeScanSessions[scanId]) {
+                            activeScanSessions[scanId].total = result.total_files;
+                            activeScanSessions[scanId].result = result;
+                        }
                         
                         // Update UI
                         updateScanTabs();

@@ -58,9 +58,9 @@ def create_scan(scan_id, scan_name, share_path, share_name):
     conn = sqlite3.connect(SCANS_DB)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO shared_scans (id, scan_name, share_path, share_name)
-        VALUES (?, ?, ?, ?)
-    ''', (scan_id, scan_name, share_path, share_name))
+        INSERT INTO shared_scans (id, scan_name, share_path, share_name, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (scan_id, scan_name, share_path, share_name, datetime.now()))
     conn.commit()
     conn.close()
 
