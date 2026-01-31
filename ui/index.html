@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>📁 Local Data Scanner</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
     <div class="header">
@@ -35,7 +35,10 @@
             <div id="localInputs" class="scan-controls">
                 <input type="text" id="folderPath" placeholder="C:\Users\ADMIN\Documents">
                 <input type="text" id="scanName" placeholder="Scan Name (optional)">
-                <button onclick="startLocalScan()">Start Scanning</button>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="startLocalScan()" style="flex: 1;">Start Scanning</button>
+                    <button onclick="stopLocalScan()" style="flex: 1; background: #ff6b6b;">Stop Scan</button>
+                </div>
             </div>
             
             <!-- Azure Inputs -->
@@ -46,7 +49,10 @@
                     <input type="text" id="storageAccount" placeholder="Storage Account Name">
                     <input type="text" id="azureScanName" placeholder="Scan Name (optional)">
                 </div>
-                <button onclick="startAzureScan()" style="width: 100%; margin-top: 10px;">Scan Azure Container</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button onclick="startAzureScan()" style="flex: 1;">Scan Azure Container</button>
+                    <button onclick="stopAzureScan()" style="flex: 1; background: #ff6b6b;">Stop Scan</button>
+                </div>
             </div>
             
             <!-- Shared Directory Inputs -->
@@ -56,7 +62,10 @@
                     <input type="text" id="shareName" placeholder="Share Name/Identifier">
                     <input type="text" id="sharedScanName" placeholder="Scan Name (optional)">
                 </div>
-                <button onclick="startSharedScan()" style="width: 100%; margin-top: 10px;">Scan Shared Directory</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button onclick="startSharedScan()" style="flex: 1;">Scan Shared Directory</button>
+                    <button onclick="stopSharedScan()" style="flex: 1; background: #ff6b6b;">Stop Scan</button>
+                </div>
             </div>
             
             <div id="scanMessage"></div>
@@ -163,13 +172,16 @@
         
         <!-- Scan History -->
         <div class="section" id="historySection" style="display: none;">
-    <h2>📜 Scan History</h2>
+            <h2>📜 Scan History</h2>
             <div id="scanHistory" style="max-height: 400px; overflow-y: auto;">
                 <p style="padding: 20px; text-align: center; color: #999;">No scans yet</p>
             </div>
         </div>
     </div>
     
-    <script src="app.js"></script>
+    <!-- Load core business logic first -->
+    <script src="app-core.js?v=9"></script>
+    <!-- Then load UI/display functions -->
+    <script src="app-ui.js?v=9"></script>
 </body>
 </html>

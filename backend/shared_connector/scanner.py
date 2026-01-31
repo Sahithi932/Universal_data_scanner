@@ -6,13 +6,14 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-def scan_shared_directory(share_path, share_name):
+def scan_shared_directory(share_path, share_name, stop_flag=None):
     """
     Scan a shared directory via UNC path
     
     Args:
         share_path: UNC path (e.g., \\192.168.1.100\Share or \\server\folder)
         share_name: Human-readable share name
+        stop_flag: Callable that returns True if scan should stop
     
     Returns:
         List of file metadata dictionaries
@@ -30,7 +31,17 @@ def scan_shared_directory(share_path, share_name):
     try:
         # Walk through shared directory
         for root, dirs, filenames in os.walk(share_path):
+            # Check stop flag before processing each directory
+            if stop_flag and stop_flag():
+                print(f"Shared scan stopped by user")
+                break
+                
             for filename in filenames:
+                # Check stop flag periodically (every 10 files)
+                if stop_flag and stop_flag() and len(files) % 10 == 0:
+                    print(f"Shared scan stopped by user after processing {len(files)} files")
+                    return files
+                    
                 try:
                     file_path = os.path.join(root, filename)
                     stat = os.stat(file_path)

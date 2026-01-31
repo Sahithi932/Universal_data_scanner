@@ -38,12 +38,13 @@ def is_ocr_eligible(file_type):
     return file_type in ['pdf', 'image', 'office']
 
 
-def scan_folder(folder_path):
+def scan_folder(folder_path, stop_flag=None):
     """
     Scan a folder recursively and return file metadata
     
     Args:
         folder_path: Path to folder
+        stop_flag: Callable that returns True if scan should stop
         
     Returns:
         List of file dictionaries with metadata
@@ -58,7 +59,17 @@ def scan_folder(folder_path):
     
     # Walk through all directories and files
     for root, dirs, filenames in os.walk(folder_path):
+        # Check stop flag before processing each directory
+        if stop_flag and stop_flag():
+            print(f"Scan stopped by user")
+            break
+            
         for filename in filenames:
+            # Check stop flag periodically (every 10 files)
+            if stop_flag and stop_flag() and len(files) % 10 == 0:
+                print(f"Scan stopped by user after processing {len(files)} files")
+                return files
+                
             try:
                 full_path = os.path.join(root, filename)
                 
@@ -77,7 +88,7 @@ def scan_folder(folder_path):
                     'file_type': file_type,
                     'mime_type': mime_type,
                     'file_size': stat_info.st_size,
-                    'last_modified': datetime.fromtimestamp(stat_info.st_mtime).isoformat() + 'Z',
+                    'last_modified': datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
                     'storage_type': 'local',
                     'eligible_for_ocr': ocr_eligible
                 }

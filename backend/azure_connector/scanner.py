@@ -37,13 +37,14 @@ def is_ocr_eligible(file_type):
     return file_type in ['pdf', 'image', 'office']
 
 
-def scan_azure_blob(connection_string, container_name):
+def scan_azure_blob(connection_string, container_name, stop_flag=None):
     """
     Scan Azure Blob Storage container and return file metadata
     
     Args:
         connection_string: Azure storage account connection string
         container_name: Name of blob container to scan
+        stop_flag: Callable that returns True if scan should stop
         
     Returns:
         List of file dictionaries with metadata
@@ -64,6 +65,11 @@ def scan_azure_blob(connection_string, container_name):
         blobs = container_client.list_blobs()
         
         for blob in blobs:
+            # Check stop flag periodically (every 10 files)
+            if stop_flag and stop_flag() and len(files) % 10 == 0:
+                print(f"Azure scan stopped by user after processing {len(files)} files")
+                return files
+                
             # Skip if it's a directory
             if blob.name.endswith('/'):
                 continue
@@ -81,7 +87,7 @@ def scan_azure_blob(connection_string, container_name):
                 'file_type': file_type,
                 'mime_type': mime_type,
                 'file_size': blob.size,
-                'last_modified': blob.last_modified.isoformat() + 'Z' if blob.last_modified else None,
+                'last_modified': blob.last_modified.isoformat() if blob.last_modified else None,
                 'storage_type': 'azure_blob',
                 'eligible_for_ocr': ocr_eligible,
                 'container': container_name

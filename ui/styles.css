@@ -176,11 +176,6 @@ button:disabled {
     background: #f4f5f8;
     margin-bottom: 10px;
     border-radius: 5px;
-    cursor: pointer;
-}
-
-.scan-item:hover { 
-    background: #e9e5e5; 
 }
 
 .scan-header {

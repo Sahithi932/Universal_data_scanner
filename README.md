@@ -7,7 +7,7 @@ A file scanning application that analyzes files across local folders, Azure Blob
 Scan and analyze files from:
 - Local Folders (Windows/Linux)
 - Azure Blob Storage
-- Shared Directories (SMB/CIFS)
+- Shared Directories (SMB)
 
 Get file metadata, type distribution, and storage analytics in one place.
 
@@ -23,7 +23,6 @@ Get file metadata, type distribution, and storage analytics in one place.
 - Advanced filtering and search
 - Pagination (100 files per page)
 - Export as JSON or CSV
-
 ---
 
 ## Project Structure
@@ -48,7 +47,8 @@ Get file metadata, type distribution, and storage analytics in one place.
 └── ui/
     ├── index.html                     # Frontend HTML
     ├── styles.css                     # Frontend styling
-    └── app.js                         # Frontend JavaScript logic
+    ├── app-core.js                    # Core business logic & API calls
+    └── app-ui.js                      # UI display & formatting functions
 ```
 ---
 
@@ -87,9 +87,9 @@ Two separate SQLite databases:
 
 1. Activate virtual environment:
 ```bash
-cd to the current folder
-python -m venv myenv
-.venv\Scripts\activate
+cd Universal_data_scanner
+python -m venv venv
+.venv\Scripts\Activate
 ```
 
 2. Install dependencies:
@@ -101,7 +101,7 @@ pip install -r requirement.txt
 ```bash
 cd backend
 python app.py
-python uvicorn app:app --reload
+uvicorn app:app --reload
 ```
 4. Open browser:
 ```
@@ -181,25 +181,47 @@ Each file record includes:
 
 ---
 
-## Security Notes
+## Test Cases
 
-- No authentication implemented (add for production)
-- Database files are unencrypted (add encryption for production)
-- Connection strings sent via HTTP (use HTTPS for production)
-- No rate limiting (add for production)
+### Best Case (Medium Folder - Fast Scan)
+**Input:**
+- Path: `C:\Users\ADMIN\Documents`
+- Files: 500-1000 files
+- Mixed file types (PDFs, DOCX, images)
+
+**Status:** Passed
+
+---
+
+### Average Case (Large Folder)
+**Input:**
+- Path: `C:\Users\ADMIN`
+- Files: 1000-2000 files
+- Total Size: Dependent on folder content (typically 10-30 GB)
+- Mixed file types (office, images, code, archives, videos)
+- Multiple nested folders
+
+**Status:** Passed
+
+---
+
+### Worst Case (Very Large Folder - Long Scan)
+**Input:**
+- Path: Large directory with deep nested folders
+- Files: 3000+ files
+- Deep folder hierarchy with multiple levels
+- Various file types and sizes
+**Status:**Passed (after fixes)
 
 ---
 
 ## Future Enhancements
-
-- Authentication & user management
-- HTTPS/SSL support
-- Database encryption
-- Scheduled scans
-- Email notifications
-- More cloud providers (AWS S3, Google Cloud)
-
+- Duplicate file detection
+- Cloud storage integration (Google,etc..)
+- Incremental scans (only new/modified files)
+- User authentication and access control
 ---
 
+---
 Version: 1.0.0
 Status: Active & Working
