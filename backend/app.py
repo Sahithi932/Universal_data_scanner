@@ -17,13 +17,13 @@ active_scans = {}
 active_scans_lock = threading.Lock()
 
 # Import Local connector
-from local_connector import (
+from .local_connector import (
     init_db, create_scan, save_files, complete_scan, fail_scan,
     get_all_scans, get_scan_files, get_total_files_count,
     scan_folder, get_summary
 )
 # Import Azure connector
-from azure_connector import (
+from .azure_connector import (
     scan_azure_blob, get_summary as azure_get_summary,
     create_scan as azure_create_scan, save_files as azure_save_files,
     complete_scan as azure_complete_scan, fail_scan as azure_fail_scan,
@@ -31,7 +31,7 @@ from azure_connector import (
     init_db as azure_init_db, get_total_files_count as azure_get_total_files_count
 )
 # Import Shared Directory connector
-from shared_connector import (
+from .shared_connector import (
     scan_shared_directory, get_summary as shared_get_summary,
     create_scan as shared_create_scan, save_files as shared_save_files,
     complete_scan as shared_complete_scan, fail_scan as shared_fail_scan,
