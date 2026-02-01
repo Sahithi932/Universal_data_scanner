@@ -30,20 +30,33 @@ Get file metadata, type distribution, and storage analytics in one place.
 ```
 .
 ├── README.md                          # Project documentation
-├── requirement.txt                    # Python dependencies
+├── requirements.txt                   # Python dependencies
+├── render.yaml                        # Render deployment config
+├── TEST_PLAN.md                       # Edge case test plan (49 tests)
 ├── backend/
 │   ├── app.py                         # FastAPI application
 │   ├── scanner.db                     # Scan metadata database
 │   ├── files.db                       # File records database
 │   ├── local_connector/
+│   │   ├── __init__.py
 │   │   ├── database.py                # Local scan database operations
 │   │   └── scanner.py                 # Local folder scanner
 │   ├── azure_connector/
+│   │   ├── __init__.py
 │   │   ├── database.py                # Azure scan database operations
 │   │   └── scanner.py                 # Azure Blob Storage scanner
 │   └── shared_connector/
+│       ├── __init__.py
 │       ├── database.py                # Shared directory database operations
 │       └── scanner.py                 # Shared directory scanner
+├── tests/
+│   ├── __init__.py                    # Test package initialization
+│   ├── conftest.py                    # Pytest fixtures and configuration
+│   ├── test_local_scanner.py          # Local scanner edge cases (14 tests)
+│   ├── test_azure_scanner.py          # Azure scanner edge cases (13 tests)
+│   ├── test_shared_scanner.py         # Shared scanner edge cases (9 tests)
+│   ├── test_database.py               # Database edge cases (8 tests)
+│   └── test_api.py                    # API edge cases (4 tests)
 └── ui/
     ├── index.html                     # Frontend HTML
     ├── styles.css                     # Frontend styling
@@ -180,92 +193,40 @@ Each file record includes:
 - Verify read permissions
 
 ---
+## How to Run Tests
 
-## Test Cases
+```bash
+# Run all tests
+pytest tests/ -v
 
-### Local Folder Scan
+# Run specific test file  
+pytest tests/test_local_scanner.py -v
 
-#### Best Case (Medium Folder - Fast Scan)
-**Input:**
-- Path: `C:\Users\ADMIN\Documents`
-- Files: 500-1000 files
-- Total Size: ~2-5 GB
-- Mixed file types (PDFs, DOCX, images)
+# Run with detailed output
+pytest tests/ -v --tb=short
 
-**Expected Result:**
-- Scan Duration: 5-10 seconds
-- All files detected correctly
-- File types classified accurately
-- Dates displayed properly
+# Run specific test class
+pytest tests/test_azure_scanner.py::TestAzureBlobScanningEdgeCases -v
 
-**Status:** ✅ Passed
+# Show print statements
+pytest tests/ -v -s
+```
+## Test Dependencies
+- pytest==7.4.0
+- FastAPI TestClient (for API tests)
+- unittest.mock (for Azure SDK mocking)
+- tempfile/shutil (for test isolation)
 
----
-
-#### Average Case (Large Folder)
-**Input:**
-- Path: `C:\Users\ADMIN`
-- Files: 1000-3000 files
-- Total Size: Dependent on folder content (typically 10-30 GB)
-- Mixed file types (office, images, code, archives, videos)
-- Multiple nested folders
-
-**Result:**
-- Scan Duration: 15-60 seconds
-- All files processed correctly
-- Stop scan button functional during scan
-- Background scanning without UI freeze
-
-**Status:** ✅ Passed
-
----
-
-#### Worst Case (Very Large Folder - Long Scan)
-**Input:**
-- Path: Large directory with deep nested folders
-- Files: 3000+ files
-- Deep folder hierarchy with multiple levels
-- Various file types and sizes
-
-** Result:**
-- Scan Duration: 3-4 minutes (86 GB test)
-- Background scanning without blocking UI
-- Stop scan button stops backend processing immediately
-
-**Status:** ✅ Passed (after fixes)
-
----
-
-### Azure Blob Storage Scan
-
-#### Test Case
-**Input:**
-- Connection String: `DefaultEndpointsProtocol=https;AccountName=****
-- Container Name: Your container name
-- Storage Account: Your account name
-- Files: 250 files tested(example folder,hierarchy with multiple folders)
-**Status:** ✅ Passed
-
----
-
-### Shared Directory Scan
-
-#### Test Case
-**Input:**
-- Share Path: `\\192.168.x.x\SharedFolder` (from friend's shared folder)
-- Share Name: `shared-1`
-- Files: 800 files
-**Status:** Passed
-
----
+## Total Progress
+ **Complete**: All 49 edge case tests implemented and passing
+ **Test Plan**: Documented in TEST_PLAN.md
+ **100% Success Rate**: No skipped or failing tests
 
 ## Future Enhancements
 - Duplicate file detection
 - Cloud storage integration (Google,etc..)
 - Incremental scans (only new/modified files)
 - User authentication and access control
----
-
 ---
 Version: 1.0.0
 Status: Active & Working
