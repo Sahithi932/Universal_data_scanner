@@ -1,5 +1,8 @@
 // CORE - Shared Variables & Scan Operations
-const API_URL = 'http://localhost:8000/api';
+// Dynamically set API URL based on environment
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000/api'
+    : `${window.location.protocol}//${window.location.host}/api`;
 let activeScanSessions = {};  // { scan_id: { name, type, files, offset, total, result } }
 let activeScanId = null;  // Currently viewing
 let currentScanFiles = [];
