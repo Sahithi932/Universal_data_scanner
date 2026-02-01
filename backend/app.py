@@ -145,6 +145,34 @@ async def start_scan(
         "message": "Scan started in background"
     }
 
+@app.post("/api/scan/browser")
+async def save_browser_scan(data: dict):
+    """Save browser-scanned data"""
+    try:
+        scan_id = data.get('scan_id')
+        scan_name = data.get('scan_name')
+        folder_path = data.get('folder_path')
+        files = data.get('files', [])
+        total_files = data.get('total_files', 0)
+        total_size = data.get('total_size', 0)
+        
+        # Create scan record
+        create_scan(scan_id, scan_name, folder_path)
+        
+        # Save files
+        save_files(scan_id, files)
+        
+        # Complete scan
+        complete_scan(scan_id, total_files, total_size)
+        
+        return {
+            "success": True,
+            "scan_id": scan_id,
+            "message": "Browser scan saved successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/scans")
 async def get_scans():
     """Get all scans from all storage types (local, azure, shared)"""
@@ -178,7 +206,6 @@ async def get_scans():
         "count": len(all_scans),
         "scans": all_scans
     }
-
 
 @app.get("/api/scan/{scan_id}")
 async def get_scan_details(scan_id: str, limit: int = 100, offset: int = 0):

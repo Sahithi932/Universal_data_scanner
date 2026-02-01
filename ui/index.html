@@ -33,7 +33,10 @@
             
             <!-- Local Folder Inputs -->
             <div id="localInputs" class="scan-controls">
-                <input type="text" id="folderPath" placeholder="C:\Users\ADMIN\Documents">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="folderPath" placeholder="C:\Users\ADMIN\Documents (or use folder picker)" style="flex: 1;">
+                    <button onclick="selectFolderFromBrowser()" style="background: #4CAF50; padding: 10px 20px; white-space: nowrap;">📁 Pick Folder</button>
+                </div>
                 <input type="text" id="scanName" placeholder="Scan Name (optional)">
                 <div style="display: flex; gap: 10px;">
                     <button onclick="startLocalScan()" style="flex: 1;">Start Scanning</button>

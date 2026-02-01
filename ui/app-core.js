@@ -9,14 +9,99 @@ let currentScanFiles = [];
 let currentStorageType = 'local';
 const PAGE_SIZE = 100;
 
+// ========== BROWSER-BASED FOLDER SCANNING ==========
+
+async function selectFolderFromBrowser() {
+    try {
+        // Check if File System Access API is supported
+        if (!('showDirectoryPicker' in window)) {
+            showMessage('⚠️ Browser folder picker not supported. Please use the text input instead or try Chrome/Edge.', 'error');
+            return;
+        }
+        
+        showMessage('📁 Select a folder to scan...', 'success');
+        
+        // Open folder picker
+        const dirHandle = await window.showDirectoryPicker();
+        
+        // Set folder name in input
+        document.getElementById('folderPath').value = dirHandle.name;
+        
+        showMessage(`✅ Folder selected: ${dirHandle.name}. Click "Start Scanning" to begin.`, 'success');
+        
+        // Store handle for scanning
+        window.selectedFolderHandle = dirHandle;
+        
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            showMessage('Folder selection cancelled', 'error');
+        } else {
+            showMessage('❌ Error selecting folder: ' + error.message, 'error');
+        }
+    }
+}
+
+async function scanFolderInBrowser(dirHandle, path = '') {
+    const files = [];
+    
+    try {
+        for await (const entry of dirHandle.values()) {
+            if (entry.kind === 'file') {
+                const file = await entry.getFile();
+                const filePath = path ? `${path}/${file.name}` : file.name;
+                
+                // Get file type
+                const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
+                const fileTypeMap = {
+                    'pdf': 'pdf',
+                    'doc': 'office', 'docx': 'office', 'xls': 'office', 'xlsx': 'office', 'ppt': 'office', 'pptx': 'office',
+                    'jpg': 'image', 'jpeg': 'image', 'png': 'image', 'gif': 'image', 'bmp': 'image', 'tiff': 'image',
+                    'txt': 'text', 'log': 'text', 'csv': 'text',
+                    'zip': 'archive', 'rar': 'archive', '7z': 'archive', 'tar': 'archive', 'gz': 'archive',
+                    'py': 'code', 'js': 'code', 'java': 'code', 'cpp': 'code', 'html': 'code', 'css': 'code',
+                    'json': 'data', 'xml': 'data', 'yaml': 'data'
+                };
+                const fileType = fileTypeMap[ext] || 'other';
+                const ocrEligible = ['pdf', 'image', 'office'].includes(fileType);
+                
+                files.push({
+                    file_name: file.name,
+                    file_path: filePath,
+                    file_type: fileType,
+                    mime_type: file.type || 'application/octet-stream',
+                    file_size: file.size,
+                    last_modified: file.lastModifiedDate ? file.lastModifiedDate.toISOString() : new Date(file.lastModified).toISOString(),
+                    storage_type: 'local',
+                    eligible_for_ocr: ocrEligible
+                });
+            } else if (entry.kind === 'directory') {
+                // Recursively scan subdirectories
+                const subPath = path ? `${path}/${entry.name}` : entry.name;
+                const subFiles = await scanFolderInBrowser(entry, subPath);
+                files.push(...subFiles);
+            }
+        }
+    } catch (error) {
+        console.error('Error scanning directory:', error);
+    }
+    
+    return files;
+}
+
 // ========== SCAN OPERATIONS ==========
 
 async function startLocalScan() {
     const folderPath = document.getElementById('folderPath').value.trim();
     const scanName = document.getElementById('scanName').value.trim();
     
+    // Check if browser-based folder handle exists
+    if (window.selectedFolderHandle) {
+        await startBrowserBasedScan(window.selectedFolderHandle, scanName || folderPath);
+        return;
+    }
+    
     if (!folderPath) {
-        showMessage('Please enter a folder path', 'error');
+        showMessage('Please enter a folder path or use the folder picker', 'error');
         return;
     }
     
@@ -101,6 +186,98 @@ async function startLocalScan() {
         
     } catch (error) {
         showMessage('❌ ' + error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Start Scanning';
+    }
+}
+
+async function startBrowserBasedScan(dirHandle, scanNameInput) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Scanning in browser...';
+    
+    try {
+        showMessage('🔍 Scanning folder in your browser...', 'success');
+        
+        const startTime = Date.now();
+        
+        // Scan folder in browser
+        const files = await scanFolderInBrowser(dirHandle);
+        
+        if (files.length === 0) {
+            throw new Error('No files found in the selected folder');
+        }
+        
+        showMessage(`✅ Found ${files.length} files. Saving to database...`, 'success');
+        
+        // Create scan record via API
+        const scanId = crypto.randomUUID();
+        const scanName = scanNameInput || `Browser Scan - ${dirHandle.name}`;
+        
+        // Calculate summary
+        const totalSize = files.reduce((sum, f) => sum + f.file_size, 0);
+        const fileTypeDist = {};
+        let ocrCount = 0;
+        
+        files.forEach(f => {
+            fileTypeDist[f.file_type] = (fileTypeDist[f.file_type] || 0) + 1;
+            if (f.eligible_for_ocr) ocrCount++;
+        });
+        
+        // Send everything to backend API in one request
+        const response = await fetch(`${API_URL}/scan/browser`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                scan_id: scanId,
+                scan_name: scanName,
+                folder_path: dirHandle.name,
+                files: files,
+                total_files: files.length,
+                total_size: totalSize,
+                duration_seconds: (Date.now() - startTime) / 1000
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to save scan data');
+        }
+        
+        const result = await response.json();
+        
+        // Set as active scan
+        activeScanId = scanId;
+        activeScanSessions[scanId] = {
+            name: scanName,
+            type: 'local',
+            files: files,
+            offset: files.length,
+            total: files.length,
+            result: {
+                success: true,
+                scan_id: scanId,
+                scan_name: scanName,
+                folder_path: dirHandle.name,
+                total_files: files.length,
+                total_size: totalSize,
+                duration_seconds: (Date.now() - startTime) / 1000,
+                file_type_distribution: fileTypeDist,
+                ocr_eligible_count: ocrCount
+            }
+        };
+        
+        // Update UI
+        updateScanTabs();
+        showScanResult(scanId);
+        loadScans();
+        showMessage(`✅ Browser scan completed! ${files.length} files found.`, 'success');
+        
+        // Clear folder handle
+        delete window.selectedFolderHandle;
+        
+    } catch (error) {
+        showMessage('❌ Browser scan failed: ' + error.message, 'error');
+    } finally {
         btn.disabled = false;
         btn.textContent = 'Start Scanning';
     }
