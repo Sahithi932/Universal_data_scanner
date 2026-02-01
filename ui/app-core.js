@@ -7,6 +7,7 @@ let activeScanSessions = {};  // { scan_id: { name, type, files, offset, total, 
 let activeScanId = null;  // Currently viewing
 let currentScanFiles = [];
 let currentStorageType = 'local';
+let browserScanStopFlag = false;  // Flag to stop browser-based scans
 const PAGE_SIZE = 100;
 
 // ========== BROWSER-BASED FOLDER SCANNING ==========
@@ -79,6 +80,12 @@ async function scanFolderInBrowser(dirHandle, path = '') {
     
     try {
         for await (const entry of dirHandle.values()) {
+            // Check stop flag
+            if (browserScanStopFlag) {
+                console.log('Browser scan stopped by user');
+                return files;
+            }
+            
             if (entry.kind === 'file') {
                 const file = await entry.getFile();
                 const filePath = path ? `${path}/${file.name}` : file.name;
@@ -229,6 +236,9 @@ async function startBrowserBasedScan(dirHandle, scanNameInput, scanType = 'local
     btn.disabled = true;
     btn.textContent = 'Scanning in browser...';
     
+    // Reset stop flag
+    browserScanStopFlag = false;
+    
     try {
         showMessage('🔍 Scanning folder in your browser...', 'success');
         
@@ -236,6 +246,16 @@ async function startBrowserBasedScan(dirHandle, scanNameInput, scanType = 'local
         
         // Scan folder in browser
         const files = await scanFolderInBrowser(dirHandle);
+        
+        // Check if scan was stopped
+        if (browserScanStopFlag) {
+            showMessage('🛑 Browser scan stopped by user', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Start Scanning';
+            delete window.selectedFolderHandle;
+            delete window.selectedFolderType;
+            return;
+        }
         
         if (files.length === 0) {
             throw new Error('No files found in the selected folder');
@@ -519,6 +539,13 @@ async function startSharedScan() {
 // ========== STOP SCAN OPERATIONS ==========
 
 async function stopLocalScan() {
+    // Check if browser-based scan is running
+    if (window.selectedFolderHandle || browserScanStopFlag !== undefined) {
+        browserScanStopFlag = true;
+        showMessage('🛑 Stopping browser scan...', 'success');
+        return;
+    }
+    
     if (!activeScanId || !activeScanSessions[activeScanId] || activeScanSessions[activeScanId].type !== 'local') {
         showMessage('No active local scan to stop', 'error');
         return;
@@ -589,6 +616,13 @@ async function stopAzureScan() {
 }
 
 async function stopSharedScan() {
+    // Check if browser-based scan is running
+    if (window.selectedFolderHandle || browserScanStopFlag !== undefined) {
+        browserScanStopFlag = true;
+        showMessage('🛑 Stopping browser scan...', 'success');
+        return;
+    }
+    
     if (!activeScanId || !activeScanSessions[activeScanId] || activeScanSessions[activeScanId].type !== 'shared') {
         showMessage('No active shared scan to stop', 'error');
         return;
