@@ -61,7 +61,10 @@
             <!-- Shared Directory Inputs -->
             <div id="sharedInputs" style="display: none;">
                 <div class="scan-controls" style="grid-template-columns: 1fr;">
-                    <input type="text" id="sharePath" placeholder="UNC Path (e.g., \\192.168.1.100\Share or \\server\folder)" style="grid-column: 1/-1;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="sharePath" placeholder="UNC Path or use folder picker" style="flex: 1;">
+                        <button onclick="selectSharedFolderFromBrowser()" style="background: #4CAF50; padding: 10px 20px; white-space: nowrap;">📁 Pick Folder</button>
+                    </div>
                     <input type="text" id="shareName" placeholder="Share Name/Identifier">
                     <input type="text" id="sharedScanName" placeholder="Scan Name (optional)">
                 </div>

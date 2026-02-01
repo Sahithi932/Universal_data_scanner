@@ -31,6 +31,39 @@ async function selectFolderFromBrowser() {
         
         // Store handle for scanning
         window.selectedFolderHandle = dirHandle;
+        window.selectedFolderType = 'local';
+        
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            showMessage('Folder selection cancelled', 'error');
+        } else {
+            showMessage('❌ Error selecting folder: ' + error.message, 'error');
+        }
+    }
+}
+
+async function selectSharedFolderFromBrowser() {
+    try {
+        // Check if File System Access API is supported
+        if (!('showDirectoryPicker' in window)) {
+            showMessage('⚠️ Browser folder picker not supported. Please use the text input instead or try Chrome/Edge.', 'error');
+            return;
+        }
+        
+        showMessage('📁 Select a shared folder to scan...', 'success');
+        
+        // Open folder picker
+        const dirHandle = await window.showDirectoryPicker();
+        
+        // Set folder name in input
+        document.getElementById('sharePath').value = dirHandle.name;
+        document.getElementById('shareName').value = dirHandle.name;
+        
+        showMessage(`✅ Folder selected: ${dirHandle.name}. Click "Start Scanning" to begin.`, 'success');
+        
+        // Store handle for scanning
+        window.selectedFolderHandle = dirHandle;
+        window.selectedFolderType = 'shared';
         
     } catch (error) {
         if (error.name === 'AbortError') {
@@ -191,7 +224,7 @@ async function startLocalScan() {
     }
 }
 
-async function startBrowserBasedScan(dirHandle, scanNameInput) {
+async function startBrowserBasedScan(dirHandle, scanNameInput, scanType = 'local') {
     const btn = event.target;
     btn.disabled = true;
     btn.textContent = 'Scanning in browser...';
@@ -249,7 +282,7 @@ async function startBrowserBasedScan(dirHandle, scanNameInput) {
         activeScanId = scanId;
         activeScanSessions[scanId] = {
             name: scanName,
-            type: 'local',
+            type: scanType,
             files: files,
             offset: files.length,
             total: files.length,
@@ -274,6 +307,7 @@ async function startBrowserBasedScan(dirHandle, scanNameInput) {
         
         // Clear folder handle
         delete window.selectedFolderHandle;
+        delete window.selectedFolderType;
         
     } catch (error) {
         showMessage('❌ Browser scan failed: ' + error.message, 'error');
@@ -385,8 +419,14 @@ async function startSharedScan() {
     const shareName = document.getElementById('shareName').value.trim();
     const scanName = document.getElementById('sharedScanName').value.trim();
     
+    // Check if browser-based folder handle exists
+    if (window.selectedFolderHandle && window.selectedFolderType === 'shared') {
+        await startBrowserBasedScan(window.selectedFolderHandle, scanName || sharePath, 'shared');
+        return;
+    }
+    
     if (!sharePath || !shareName) {
-        showMessage('Please fill in Share Path and Share Name', 'error');
+        showMessage('Please fill in Share Path and Share Name or use folder picker', 'error');
         return;
     }
     
