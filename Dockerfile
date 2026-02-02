@@ -18,10 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY backend/ ./backend/
 COPY ui/ ./ui/
-COPY tests/ ./tests/
-COPY run_tests.sh .
-COPY README.md .
-COPY TEST_PLAN.md .
 
 # Create database directory
 RUN mkdir -p backend
