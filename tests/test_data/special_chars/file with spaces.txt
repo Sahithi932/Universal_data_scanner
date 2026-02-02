@@ -1,0 +1,1 @@
+Test file with spaces and special chars áéíóú @#$%.txt content

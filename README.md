@@ -90,38 +90,61 @@ Two separate SQLite databases:
 
 ---
 
-## Setup
+## Setup & Installation
 
-### Prerequisites
-- Python 3.13+
-- pip
+### Option 1: Docker (Recommended) 🐳
 
-### Installation
+**Prerequisites:**
+- Docker Desktop installed and running
+- Virtualization enabled in BIOS (required for Docker)
 
-1. Activate virtual environment:
+**Quick Start:**
+
+1. **Build Docker image:**
 ```bash
-cd Universal_data_scanner
-python -m venv venv
-.venv\Scripts\Activate.ps1
+docker build -t uds-app .
 ```
-
-2. Install dependencies:
+2. **Run the application:**
 ```bash
-pip install -r requirement.txt
+docker run -p 8000:8000 uds-app
 ```
-
-3. Start server:
-```bash
-cd backend
-python app.py
-uvicorn app:app --reload
-```
-4. Open browser:
+3. **Open in browser:**
 ```
 http://localhost:8000
 ```
 ---
+### Option 2: Local Python Setup
 
+**Prerequisites:**
+- Python 3.13+
+- pip package manager
+
+**Installation Steps:**
+
+1. **Create and activate virtual environment:**
+```bash
+python -m venv venv
+# Windows:
+.venv\Scripts\Activate.ps1
+# Linux/Mac:
+source venv/bin/activate
+```
+
+2. **Install dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+3. **Start server:**
+```bash
+uvicorn backend.app:app --reload
+```
+
+4. **Open in browser:**
+```
+http://localhost:8000
+```
+---
 ## Usage
 
 ### Local Folder Scan
@@ -173,55 +196,112 @@ Each file record includes:
 
 ## Troubleshooting
 
-**Server won't start:**
-- Check if port 8000 is available
-- Verify virtual environment is activated
-- Reinstall dependencies: `pip install -r requirement.txt --force-reinstall`
+**Docker not working?**
+- Enable virtualization in BIOS and restart
+- Open Docker Desktop and wait for "Engine running"
 
-**Import errors:**
-- Activate virtual environment
-- Reinstall dependencies
+**Server won't start?**
+- Check port 8000 is free
+- Activate virtual environment: `.venv\Scripts\Activate.ps1`
+- Reinstall: `pip install -r requirements.txt`
 
-**Azure connection issues:**
-- Verify connection string format
-- Check container name
-- Ensure network connectivity
+**Import errors?**
+- Activate virtual environment first
+- Run: `pip install -r requirements.txt`
 
-**Shared directory access denied:**
-- Verify UNC path format
-- Check network connectivity
-- Verify read permissions
+**Azure connection failed?**
+- Check connection string and container name
+
+**Can't access shared folder?**
+- Verify network path and permissions
 
 ---
-## How to Run Tests
+
+## Testing
+
+### Test Suite Overview
+- **Total Tests:** 49 edge case tests
+- **Coverage:** API, Database, Local/Azure/Shared scanners
+- **Status:** ✅ All tests passing
+- **Documentation:** See (TEST_PLAN.md)
+
+### Running Tests in Docker (Recommended)
+
+**Run all tests inside Docker container:**
+```bash
+docker run uds-app bash run_tests.sh
+```
+
+**Interactive testing:**
+```bash
+docker run -it uds-app bash
+pytest tests/ -v
+exit
+```
+
+### Running Tests Locally
+
+**Run all tests:**
+```bash
+pytest tests/ -v
+```
+
+**Run specific test file:**
+```bash
+pytest tests/test_local_scanner.py -v
+pytest tests/test_azure_scanner.py -v
+pytest tests/test_database.py -v
+pytest tests/test_api.py -v
+pytest tests/test_shared_scanner.py -v
+```
+
+**Run with coverage report:**
+```bash
+pytest tests/ -v --cov=backend --cov-report=html
+```
+
+**Run specific test class:**
+```bash
+pytest tests/test_azure_scanner.py::TestAzureBlobScanningEdgeCases -v
+```
+
+## Docker Commands Reference
 
 ```bash
-# Run all tests
-pytest tests/ -v
+# Build image
+docker build -t uds-app .
 
-# Run specific test file  
-pytest tests/test_local_scanner.py -v
+# Run application
+docker run -p 8000:8000 uds-app
 
-# Run with detailed output
-pytest tests/ -v --tb=short
+# Run tests
+docker run uds-app bash run_tests.sh
 
-# Run specific test class
-pytest tests/test_azure_scanner.py::TestAzureBlobScanningEdgeCases -v
+# Interactive mode
+docker run -it uds-app bash
 
-# Show print statements
-pytest tests/ -v -s
+# View running containers
+docker ps
+
+# Stop container
+docker stop <container_id>
+
+# View images
+docker images
+
+# Remove image
+docker rmi uds-app
 ```
-## Test Dependencies
-- pytest==7.4.0
-- FastAPI TestClient (for API tests)
-- unittest.mock (for Azure SDK mocking)
-- tempfile/shutil (for test isolation)
+---
+## Project Status
 
-## Total Progress
- **Complete**: All 49 edge case tests implemented and passing
- **Test Plan**: Documented in TEST_PLAN.md
- **100% Success Rate**: No skipped or failing tests
+**Version:** 1.0.0  
+**Status:** ✅ Active & Working  
+**Tests:** ✅ 49/49 Passing  
+**Docker:** ✅ Containerized  
+**Deployment:** Ready for production
 
+---
 ## Future Enhancements
 - Duplicate file detection
 - Cloud storage integration (Google,etc..)
